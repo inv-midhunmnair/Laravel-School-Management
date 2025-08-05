@@ -32,4 +32,12 @@ class AuthController extends Controller
     {
         return response()->json(auth()->user());
     }
+
+    public function refresh() {
+
+        $refresh_token= auth()->refresh();
+        return response()->json([
+            'new_access_token' => $refresh_token
+        ]);
+    }
 }
