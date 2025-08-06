@@ -25,37 +25,39 @@ class TeacherController extends Controller
      */
     public function store(Request $request)
     {
-        $validated_data= $request->validate([
-            'email' => 'required|email|unique:users',
-            'username' => 'required|string|unique:users',
-            'password' => 'required|string|min:6',
-            'first_name' => 'required|string',
-            'last_name' => 'required|string',
-            'phone' => 'required|string',
-            'subject_specialization' => 'required|string',
-            'employee_id' => 'required|string|unique:teachers',
-            'date_of_joining' => 'required|date',
-            'status' => 'required|in:active,inactive',
-        ],
-        [
-            'email.required' => 'Please fill an email address',
-            'email.unique' => 'email already exists',
-            'password.required' => 'Please set a password',
-            'password.min' => 'Please input a password of min 6 characters length',
-            'first_name.required' => 'Please input the first name',
-            'last_name' => 'Please input the last name',
-            'phone.required' => 'Please fill the phone number',
-            'subject_specialization.required' => 'Please enter a subject',
-            'employee_id.required' => 'Please enter the employee id',
-            'employee_id.unique' => 'Employee id already exists',
-            'date_of_joining.required' => 'Please enter a date',
-            'status.required' => 'Please select the status',
-            'username.required' => 'Please entrer username',
-            'username.unique' => 'Username already exists'
-        ]);
+        $validated_data = $request->validate(
+            [
+                'email' => 'required|email|unique:users',
+                'username' => 'required|string|unique:users',
+                'password' => 'required|string|min:6',
+                'first_name' => 'required|string',
+                'last_name' => 'required|string',
+                'phone' => 'required|string',
+                'subject_specialization' => 'required|string',
+                'employee_id' => 'required|string|unique:teachers',
+                'date_of_joining' => 'required|date',
+                'status' => 'required|in:active,inactive',
+            ],
+            [
+                'email.required' => 'Please fill an email address',
+                'email.unique' => 'email already exists',
+                'password.required' => 'Please set a password',
+                'password.min' => 'Please input a password of min 6 characters length',
+                'first_name.required' => 'Please input the first name',
+                'last_name' => 'Please input the last name',
+                'phone.required' => 'Please fill the phone number',
+                'subject_specialization.required' => 'Please enter a subject',
+                'employee_id.required' => 'Please enter the employee id',
+                'employee_id.unique' => 'Employee id already exists',
+                'date_of_joining.required' => 'Please enter a date',
+                'status.required' => 'Please select the status',
+                'username.required' => 'Please entrer username',
+                'username.unique' => 'Username already exists'
+            ]
+        );
 
         $user = User::create([
-            'name' => $validated_data['first_name'].' '.$validated_data['last_name'],
+            'name' => $validated_data['first_name'] . ' ' . $validated_data['last_name'],
             'email' => $validated_data['email'],
             'password' => Hash::make($validated_data['password']),
             'username' => $validated_data['username'],
@@ -77,8 +79,8 @@ class TeacherController extends Controller
 
         return response()->json([
             'message' => 'Teacher Created Successfully',
-            'teacher' => $validated_data['first_name'].' '.$validated_data['last_name']
-        ],201);
+            'teacher' => $validated_data['first_name'] . ' ' . $validated_data['last_name']
+        ], 201);
     }
 
     /**
@@ -86,7 +88,7 @@ class TeacherController extends Controller
      */
     public function show(string $id)
     {
-        $teacher=Teacher::with('user')->findOrFail($id);
+        $teacher = Teacher::with('user')->findOrFail($id);
         return response()->json($teacher);
     }
 
@@ -100,8 +102,8 @@ class TeacherController extends Controller
         $validated = $request->validate([
             'first_name' => 'sometimes|string',
             'last_name' => 'sometimes|string',
-            'employee_id' => 'sometimes|string|unique:teachers,employee_id,'.$teacher->id,
-            'email' => 'sometimes|string|unique:users,email,'.$user->email,
+            'employee_id' => 'sometimes|string|unique:teachers,employee_id,' . $teacher->id,
+            'email' => 'sometimes|string|unique:users,email,' . $user->id,
             'phone' => 'sometimes|string',
             'subject_specialization' => 'sometimes|string',
             'date_of_joining' => 'sometimes|date',
@@ -109,14 +111,14 @@ class TeacherController extends Controller
 
         $teacher->update($validated);
 
-        $user->name = $validated['first_name'].' '.$validated['last_name'];
+        $user->name = $validated['first_name'] . ' ' . $validated['last_name'];
         $user->email = $validated['email'];
 
         $user->save();
 
         return response()->json([
             'message' => 'details updated successfully',
-            'teacher' => $teacher['first_name'].' '.$teacher['last_name']
+            'teacher' => $teacher['first_name'] . ' ' . $teacher['last_name']
         ]);
     }
 
@@ -134,7 +136,7 @@ class TeacherController extends Controller
         $user->save();
 
         return response()->json([
-            'message'=>'succesfully deleted user'
+            'message' => 'succesfully deleted user'
         ]);
     }
 }
