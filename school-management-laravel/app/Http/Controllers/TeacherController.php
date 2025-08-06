@@ -15,12 +15,7 @@ class TeacherController extends Controller
      */
     public function index()
     {
-        $teachers = Teacher::with('user')
-        ->where('status', 'active')
-        ->whereHas('user', function ($query) {
-            $query->where('status', 'active');
-        })
-        ->get();
+        $teachers = Teacher::with('user')->where('status', 'active')->paginate(1);
 
         return response()->json($teachers);
     }

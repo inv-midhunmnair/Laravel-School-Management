@@ -19,7 +19,7 @@ class StudentController extends Controller
 
     if ($user->role === 'admin') {
      
-        $students = Student::where('status', 'active')->get();
+        $students = Student::where('status', 'active')->paginate(2);
 
     } elseif ($user->role === 'teacher') {
        
@@ -29,9 +29,7 @@ class StudentController extends Controller
             return response()->json(['message' => 'Teacher profile not found'], 404);
         }
 
-        $students = Student::where('assigned_teacher_id', $teacher->id)
-                           ->where('status', 'active')
-                           ->get();
+        $students = Student::where('assigned_teacher_id', $teacher->id)->where('status', 'active')->paginate(1);
     } else {
   
         return response()->json(['message' => 'Unauthorized'], 403);
