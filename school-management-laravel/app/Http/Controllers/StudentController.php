@@ -2,6 +2,7 @@
 
 namespace App\Http\Controllers;
 
+use Illuminate\Support\Facades\Auth;
 use Illuminate\Http\Request;
 use App\Models\Student;
 use App\Models\User;
@@ -14,14 +15,31 @@ class StudentController extends Controller
      */
     public function index()
     {
-        $students = Student::with('user')
-        ->where('status', 'active')
-        ->whereHas('user', function($query){
-            $query->where('status','active');
-        })
-        ->get();
+        $user = auth()->user();
 
-        return response()->json($students);
+    if ($user->role === 'admin') {
+     
+        $students = Student::where('status', 'active')->get();
+
+    } elseif ($user->role === 'teacher') {
+       
+        $teacher = $user->teacher;
+
+        if (!$teacher) {
+            return response()->json(['message' => 'Teacher profile not found'], 404);
+        }
+
+        $students = Student::where('assigned_teacher_id', $teacher->id)
+                           ->where('status', 'active')
+                           ->get();
+    } else {
+  
+        return response()->json(['message' => 'Unauthorized'], 403);
+    }
+
+    return response()->json([
+        'data' => $students,
+    ]);
     }
 
     /**

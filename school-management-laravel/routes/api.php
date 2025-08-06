@@ -15,3 +15,5 @@ Route::middleware(['auth:api','role:admin'])->prefix('admin')->group(function(){
     Route::apiResource('/students', StudentController::class);
 });
 
+Route::get('/teacher-student', [StudentController::class,'index'])->middleware(['auth:api','role:teacher']);
+
