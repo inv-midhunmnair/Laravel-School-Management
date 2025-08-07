@@ -47,7 +47,7 @@ const Sidebar = () => {
     { label: "Students", path: "/students", icon: <SchoolIcon /> },
   ];
   const teacherItems = [
-    { label: "Students", path: "/teacher/students", icon: <GroupIcon /> },
+    { label: "Students", path: "/teacher-students", icon: <GroupIcon /> },
   ];
 
   let roleItems: { label: string; path: string; icon: JSX.Element }[] = [];

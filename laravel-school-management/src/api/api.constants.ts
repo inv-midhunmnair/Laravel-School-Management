@@ -4,7 +4,7 @@ export const API_ENDPOINTS = {
   CRUD_STUDENT: "/admin/students/",
   //   STUDENT_PROFILE: "/student/profile/",
   //   TEACHER_PROFILE: "/teacher/profile/",
-  TEACHER_STUDENTS: "/teacher-students/",
+  TEACHER_STUDENTS: "/teacher-student/",
   //   STUDENT_TEACHERS: "/student/teacher",
   //   STUDENT_IMPORTS: "/admin/import/students/",
   //   CREATE_EXAM: "/exams/teacher/create-exam/",

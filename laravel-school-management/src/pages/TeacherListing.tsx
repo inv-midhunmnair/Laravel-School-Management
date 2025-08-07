@@ -15,26 +15,51 @@ import {
   DialogActions,
   TextField,
   Button,
+  Alert,
+  Collapse,
 } from "@mui/material";
 import EditIcon from "@mui/icons-material/Edit";
 
-const TeachersPage = () => {
-  const [teachers, setTeachers] = useState([]);
+interface Teacher {
+  id: number;
+  first_name: string;
+  last_name: string;
+  email: string;
+  phone: string;
+  employee_id: string;
+  subject_specialization: string;
+  date_of_joining: string;
+  status: string;
+}
+
+interface PaginatedResponse {
+  current_page: number;
+  data: Teacher[];
+  total: number;
+  per_page: number;
+}
+
+const TeacherListing = () => {
+  const [teachers, setTeachers] = useState<Teacher[]>([]);
   const [page, setPage] = useState(1);
-  const [count, setCount] = useState(0);
-  const [selectedTeacher, setSelectedTeacher] = useState<any>(null);
+  const [totalPages, setTotalPages] = useState(1);
+  const [selectedTeacher, setSelectedTeacher] = useState<Teacher | null>(null);
   const [formData, setFormData] = useState<any>({});
   const [open, setOpen] = useState(false);
+  const [successMessage, setSuccessMessage] = useState("");
 
   const fetchTeachers = async (pageNumber: number) => {
     try {
       const res = await axiosInstance.get(
         `/admin/teachers/?page=${pageNumber}`
       );
-      setTeachers(res.data.data);
-      setCount(Math.ceil(res.data.count / 3));
+      const data: PaginatedResponse = res.data;
+
+      setTeachers(data.data);
+      setPage(data.current_page);
+      setTotalPages(Math.ceil(data.total / data.per_page));
     } catch (err) {
-      console.error("❌ Error fetching teachers:", err);
+      console.error("Error fetching teachers:", err);
     }
   };
 
@@ -49,7 +74,7 @@ const TeachersPage = () => {
     setPage(value);
   };
 
-  const handleEditClick = (teacher: any) => {
+  const handleEditClick = (teacher: Teacher) => {
     setSelectedTeacher(teacher);
     setFormData({ ...teacher });
     setOpen(true);
@@ -71,13 +96,17 @@ const TeachersPage = () => {
   const handleSave = async () => {
     try {
       await axiosInstance.put(
-        `/admin/teachers/${selectedTeacher.id}/`,
+        `/admin/teachers/${selectedTeacher?.id}/`,
         formData
       );
       handleClose();
       fetchTeachers(page);
+      setSuccessMessage("Teacher updated successfully!");
+
+      // Auto-dismiss the success message after 3 seconds
+      setTimeout(() => setSuccessMessage(""), 3000);
     } catch (error) {
-      console.error("❌ Failed to update teacher:", error);
+      console.error("Failed to update teacher:", error);
     }
   };
 
@@ -87,8 +116,15 @@ const TeachersPage = () => {
         Teacher Directory
       </Typography>
 
+      {/* Success Alert */}
+      <Collapse in={!!successMessage}>
+        <Alert severity="success" sx={{ mb: 2 }}>
+          {successMessage}
+        </Alert>
+      </Collapse>
+
       <Grid container spacing={3}>
-        {teachers.map((teacher: any) => (
+        {teachers.map((teacher: Teacher) => (
           <Grid item xs={12} sm={6} md={4} key={teacher.id}>
             <Card elevation={3}>
               <CardContent>
@@ -131,7 +167,7 @@ const TeachersPage = () => {
       {/* Pagination */}
       <Box mt={4} display="flex" justifyContent="center">
         <Pagination
-          count={count}
+          count={totalPages}
           page={page}
           onChange={handlePageChange}
           color="primary"
@@ -220,9 +256,7 @@ const TeachersPage = () => {
           </Grid>
         </DialogContent>
         <DialogActions>
-          <Button onClick={handleClose} color="secondary">
-            Cancel
-          </Button>
+          <Button onClick={handleClose}>Cancel</Button>
           <Button onClick={handleSave} color="primary" variant="contained">
             Save
           </Button>
@@ -232,4 +266,4 @@ const TeachersPage = () => {
   );
 };
 
-export default TeachersPage;
+export default TeacherListing;

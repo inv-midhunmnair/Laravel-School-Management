@@ -1,16 +1,16 @@
 import { useState } from "react";
-import { teacherOperations } from "../api/auth.api";
 import {
+  Grid,
   TextField,
   Button,
   Typography,
-  Grid,
   Box,
   Alert,
   Paper,
 } from "@mui/material";
+import { studentOperations } from "../api/auth.api";
 
-const RegisterTeacherPage = () => {
+const RegisterStudentPage = () => {
   const [formData, setFormData] = useState({
     username: "",
     password: "",
@@ -18,9 +18,11 @@ const RegisterTeacherPage = () => {
     last_name: "",
     email: "",
     phone: "",
-    employee_id: "",
-    subject_specialization: "",
-    date_of_joining: "",
+    roll_number: "",
+    class: "",
+    date_of_birth: "",
+    admission_date: "",
+    assigned_teacher_id: "",
   });
 
   const [message, setMessage] = useState("");
@@ -37,13 +39,13 @@ const RegisterTeacherPage = () => {
 
     const payload = {
       ...formData,
-      role: "teacher",
+      role: "student",
       status: "active",
     };
 
     try {
-      await teacherOperations(payload);
-      setMessage("Teacher registered successfully!");
+      await studentOperations(payload);
+      setMessage("Student registered successfully!");
       setFormData({
         username: "",
         password: "",
@@ -51,9 +53,11 @@ const RegisterTeacherPage = () => {
         last_name: "",
         email: "",
         phone: "",
-        employee_id: "",
-        subject_specialization: "",
-        date_of_joining: "",
+        roll_number: "",
+        class: "",
+        date_of_birth: "",
+        admission_date: "",
+        assigned_teacher_id: "",
       });
     } catch (err) {
       setError("Registration failed. Please check the input.");
@@ -64,7 +68,7 @@ const RegisterTeacherPage = () => {
     <Box sx={{ maxWidth: 1100, mx: "auto", mt: 5, px: 2 }}>
       <Paper elevation={2} sx={{ p: 3, borderRadius: 2 }}>
         <Typography variant="h6" align="center" gutterBottom fontWeight={600}>
-          Register Teacher
+          Register Student
         </Typography>
 
         {message && (
@@ -86,10 +90,12 @@ const RegisterTeacherPage = () => {
               ["first_name", "First Name"],
               ["last_name", "Last Name"],
               ["email", "Email"],
-              ["phone", "Phone"],
-              ["employee_id", "Employee ID"],
-              ["subject_specialization", "Subject Specialization"],
-              ["date_of_joining", "Date of Joining"],
+              ["phone", "Phone Number"],
+              ["roll_number", "Roll Number"],
+              ["class", "Class"],
+              ["assigned_teacher_id", "Assigned Teacher ID"],
+              ["date_of_birth", "Date of Birth"],
+              ["admission_date", "Admission Date"],
             ].map(([name, label]) => (
               <Grid item xs={12} sm={4} key={name}>
                 <TextField
@@ -99,23 +105,23 @@ const RegisterTeacherPage = () => {
                   type={
                     name === "password"
                       ? "password"
-                      : name === "date_of_joining"
+                      : name.includes("date")
                       ? "date"
                       : "text"
                   }
                   value={(formData as any)[name]}
                   onChange={handleChange}
                   fullWidth
-                  required
                   InputLabelProps={
-                    name === "date_of_joining" ? { shrink: true } : {}
+                    name.includes("date") ? { shrink: true } : {}
                   }
+                  required
                 />
               </Grid>
             ))}
           </Grid>
 
-          {/* Submit Button */}
+          {/* Button placed clearly below the grid */}
           <Box sx={{ textAlign: "center", mt: 4 }}>
             <Button
               type="submit"
@@ -139,4 +145,4 @@ const RegisterTeacherPage = () => {
   );
 };
 
-export default RegisterTeacherPage;
+export default RegisterStudentPage;
