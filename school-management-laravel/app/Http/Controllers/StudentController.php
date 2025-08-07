@@ -17,27 +17,26 @@ class StudentController extends Controller
     {
         $user = auth()->user();
 
-    if ($user->role === 'admin') {
-     
-        $students = Student::where('status', 'active')->paginate(2);
+        if ($user->role === 'admin') {
 
-    } elseif ($user->role === 'teacher') {
-       
-        $teacher = $user->teacher;
+            $students = Student::where('status', 'active')->paginate(2);
+        } elseif ($user->role === 'teacher') {
 
-        if (!$teacher) {
-            return response()->json(['message' => 'Teacher profile not found'], 404);
+            $teacher = $user->teacher;
+
+            if (!$teacher) {
+                return response()->json(['message' => 'Teacher profile not found'], 404);
+            }
+
+            $students = Student::where('assigned_teacher_id', $teacher->id)->where('status', 'active')->paginate(1);
+        } else {
+
+            return response()->json(['message' => 'Unauthorized'], 403);
         }
 
-        $students = Student::where('assigned_teacher_id', $teacher->id)->where('status', 'active')->paginate(1);
-    } else {
-  
-        return response()->json(['message' => 'Unauthorized'], 403);
-    }
-
-    return response()->json([
-        'data' => $students,
-    ]);
+        return response()->json([
+            'data' => $students,
+        ]);
     }
 
     /**
@@ -45,7 +44,7 @@ class StudentController extends Controller
      */
     public function store(Request $request)
     {
-        $validated_data= $request->validate([
+        $validated_data = $request->validate([
             'email' => 'required|email|unique:users',
             'username' => 'required|string|unique:users',
             'password' => 'required|string|min:6',
@@ -61,7 +60,7 @@ class StudentController extends Controller
         ]);
 
         $user = User::create([
-            'name' => $validated_data['first_name'].' '.$validated_data['last_name'],
+            'name' => $validated_data['first_name'] . ' ' . $validated_data['last_name'],
             'email' => $validated_data['email'],
             'password' => Hash::make($validated_data['password']),
             'username' => $validated_data['username'],
@@ -85,17 +84,16 @@ class StudentController extends Controller
 
         return response()->json([
             'message' => 'student Created Successfully',
-            'student' => $validated_data['first_name'].' '.$validated_data['last_name']
-        ],201);
-
-    }   
+            'student' => $validated_data['first_name'] . ' ' . $validated_data['last_name']
+        ], 201);
+    }
 
     /**
      * Display the specified resource.
      */
     public function show(string $id)
     {
-        $student=Student::with('user')->findOrFail($id);
+        $student = Student::with('user')->findOrFail($id);
         return response()->json($student);
     }
 
@@ -109,10 +107,10 @@ class StudentController extends Controller
         $validated = $request->validate([
             'first_name' => 'sometimes|string',
             'last_name' => 'sometimes|string',
-            'assigned_teacher_id' => 'sometimes|string',
-            'email' => 'sometimes|string|unique:users,email,'.$user->id,
+            'assigned_teacher_id' => 'sometimes|integer',
+            'email' => 'sometimes|string|unique:users,email,' . $user->id,
             'phone' => 'sometimes|string',
-            'roll_number' => 'sometimes|string|unique:students,roll_number,'.$student->id,
+            'roll_number' => 'sometimes|string|unique:students,roll_number,' . $student->id,
             'class' => 'sometimes|string',
             'admission_date' => 'sometimes|string',
             'date_of_birth' => 'sometimes|date',
@@ -120,14 +118,14 @@ class StudentController extends Controller
 
         $student->update($validated);
 
-        $user->name = $validated['first_name'].' '.$validated['last_name'];
+        $user->name = $validated['first_name'] . ' ' . $validated['last_name'];
         $user->email = $validated['email'];
 
         $user->save();
 
         return response()->json([
             'message' => 'details updated successfully',
-            'student' => $student['first_name'].' '.$student['last_name']
+            'student' => $student['first_name'] . ' ' . $student['last_name']
         ]);
     }
 
@@ -136,7 +134,7 @@ class StudentController extends Controller
      */
     public function destroy(string $id)
     {
-        $student = Student::with('user') -> findOrFail($id);
+        $student = Student::with('user')->findOrFail($id);
         $user = $student->user;
 
         $student['status'] = 'inactive';
@@ -145,7 +143,7 @@ class StudentController extends Controller
         $user->save();
 
         return response()->json([
-            'message'=>'succesfully deleted user'
+            'message' => 'succesfully deleted user'
         ]);
     }
 }
