@@ -24,7 +24,7 @@ const RegisterTeacherPage = () => {
   });
 
   const [message, setMessage] = useState("");
-  const [error, setError] = useState("");
+  const [error, setError] = useState<string[]>([]);
 
   const handleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     setFormData({ ...formData, [e.target.name]: e.target.value });
@@ -55,8 +55,14 @@ const RegisterTeacherPage = () => {
         subject_specialization: "",
         date_of_joining: "",
       });
-    } catch (err) {
-      setError("Registration failed. Please check the input.");
+    } catch (err: any) {
+      const serverErrors = err?.response?.data?.errors;
+      if (serverErrors) {
+        const errorList = Object.values(serverErrors).flat();
+        setError(errorList);
+      } else {
+        setError(["Registration failed. Please check the input."]);
+      }
     }
   };
 
@@ -72,9 +78,14 @@ const RegisterTeacherPage = () => {
             {message}
           </Alert>
         )}
-        {error && (
+
+        {error.length > 0 && (
           <Alert severity="error" sx={{ mb: 2 }}>
-            {error}
+            <ul style={{ margin: 0, paddingLeft: 20 }}>
+              {error.map((err, index) => (
+                <li key={index}>{err}</li>
+              ))}
+            </ul>
           </Alert>
         )}
 

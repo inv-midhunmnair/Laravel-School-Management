@@ -7,6 +7,7 @@ use Illuminate\Http\Request;
 use App\Models\Student;
 use App\Models\User;
 use Illuminate\Support\Facades\Hash;
+use Illuminate\Database\Eloquent\ModelNotFoundException;
 
 class StudentController extends Controller
 {
@@ -19,7 +20,7 @@ class StudentController extends Controller
 
         if ($user->role === 'admin') {
 
-            $students = Student::where('status', 'active')->paginate(2);
+            $students = Student::where('status', 'active')->paginate(5);
         } elseif ($user->role === 'teacher') {
 
             $teacher = $user->teacher;
@@ -48,9 +49,9 @@ class StudentController extends Controller
             'email' => 'required|email|unique:users',
             'username' => 'required|string|unique:users',
             'password' => 'required|string|min:6',
-            'first_name' => 'required|string',
+            'first_name' => 'required|string|min:2',
             'last_name' => 'required|string',
-            'phone' => 'required|string',
+            'phone' => 'required|digits:10',
             'roll_number' => 'required|string|unique:students',
             'class' => 'required|string',
             'date_of_birth' => 'required|date',
@@ -93,7 +94,11 @@ class StudentController extends Controller
      */
     public function show(string $id)
     {
-        $student = Student::with('user')->findOrFail($id);
+        try{
+            $student = Student::with('user')->findOrFail($id);
+        } catch(ModelNotFoundException $e) {
+            return response()->json(['error'=>'No user found'],404);
+        }
         return response()->json($student);
     }
 
@@ -105,11 +110,11 @@ class StudentController extends Controller
         $student = Student::with('user')->findOrFail($id);
         $user = $student->user;
         $validated = $request->validate([
-            'first_name' => 'sometimes|string',
+            'first_name' => 'sometimes|string|min:2',
             'last_name' => 'sometimes|string',
             'assigned_teacher_id' => 'sometimes|integer',
-            'email' => 'sometimes|string|unique:users,email,' . $user->id,
-            'phone' => 'sometimes|string',
+            'email' => 'sometimes|string|email|unique:users,email,' . $user->id,
+            'phone' => 'sometimes|digits:10',
             'roll_number' => 'sometimes|string|unique:students,roll_number,' . $student->id,
             'class' => 'sometimes|string',
             'admission_date' => 'sometimes|string',

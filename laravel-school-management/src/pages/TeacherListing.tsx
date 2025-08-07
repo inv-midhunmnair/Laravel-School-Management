@@ -19,6 +19,7 @@ import {
   Collapse,
 } from "@mui/material";
 import EditIcon from "@mui/icons-material/Edit";
+import DeleteIcon from "@mui/icons-material/Delete";
 
 interface Teacher {
   id: number;
@@ -46,7 +47,10 @@ const TeacherListing = () => {
   const [selectedTeacher, setSelectedTeacher] = useState<Teacher | null>(null);
   const [formData, setFormData] = useState<any>({});
   const [open, setOpen] = useState(false);
+  const [deleteDialog, setDeleteDialog] = useState(false);
+  const [teacherToDelete, setTeacherToDelete] = useState<Teacher | null>(null);
   const [successMessage, setSuccessMessage] = useState("");
+  const [errorMessages, setErrorMessages] = useState<string[]>([]);
 
   const fetchTeachers = async (pageNumber: number) => {
     try {
@@ -77,6 +81,7 @@ const TeacherListing = () => {
   const handleEditClick = (teacher: Teacher) => {
     setSelectedTeacher(teacher);
     setFormData({ ...teacher });
+    setErrorMessages([]);
     setOpen(true);
   };
 
@@ -84,6 +89,7 @@ const TeacherListing = () => {
     setOpen(false);
     setSelectedTeacher(null);
     setFormData({});
+    setErrorMessages([]);
   };
 
   const handleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
@@ -102,11 +108,39 @@ const TeacherListing = () => {
       handleClose();
       fetchTeachers(page);
       setSuccessMessage("Teacher updated successfully!");
+      setErrorMessages([]);
 
-      // Auto-dismiss the success message after 3 seconds
+      setTimeout(() => setSuccessMessage(""), 3000);
+    } catch (error: any) {
+      console.error("Failed to update teacher:", error);
+      const serverErrors = error?.response?.data?.errors;
+      if (serverErrors) {
+        const errorList = Object.values(serverErrors).flat();
+        setErrorMessages(errorList as string[]);
+      } else {
+        setErrorMessages(["Update failed. Please try again."]);
+      }
+    }
+  };
+
+  const handleDeleteClick = (teacher: Teacher) => {
+    setTeacherToDelete(teacher);
+    setDeleteDialog(true);
+  };
+
+  const handleDeleteConfirm = async () => {
+    if (!teacherToDelete) return;
+    try {
+      await axiosInstance.delete(`/admin/teachers/${teacherToDelete.id}/`);
+      setSuccessMessage("Teacher deleted successfully!");
+      setDeleteDialog(false);
+      setTeacherToDelete(null);
+      fetchTeachers(page);
+
       setTimeout(() => setSuccessMessage(""), 3000);
     } catch (error) {
-      console.error("Failed to update teacher:", error);
+      console.error("Failed to delete teacher:", error);
+      setDeleteDialog(false);
     }
   };
 
@@ -116,7 +150,6 @@ const TeacherListing = () => {
         Teacher Directory
       </Typography>
 
-      {/* Success Alert */}
       <Collapse in={!!successMessage}>
         <Alert severity="success" sx={{ mb: 2 }}>
           {successMessage}
@@ -132,12 +165,21 @@ const TeacherListing = () => {
                   <Typography variant="h6" color="primary">
                     {teacher.first_name} {teacher.last_name}
                   </Typography>
-                  <IconButton
-                    onClick={() => handleEditClick(teacher)}
-                    size="small"
-                  >
-                    <EditIcon fontSize="small" />
-                  </IconButton>
+                  <Box>
+                    <IconButton
+                      onClick={() => handleEditClick(teacher)}
+                      size="small"
+                    >
+                      <EditIcon fontSize="small" />
+                    </IconButton>
+                    <IconButton
+                      onClick={() => handleDeleteClick(teacher)}
+                      size="small"
+                      color="error"
+                    >
+                      <DeleteIcon fontSize="small" />
+                    </IconButton>
+                  </Box>
                 </Box>
                 <Divider sx={{ my: 1 }} />
                 <Typography variant="body2" color="textSecondary">
@@ -164,7 +206,6 @@ const TeacherListing = () => {
         ))}
       </Grid>
 
-      {/* Pagination */}
       <Box mt={4} display="flex" justifyContent="center">
         <Pagination
           count={totalPages}
@@ -178,6 +219,16 @@ const TeacherListing = () => {
       <Dialog open={open} onClose={handleClose} maxWidth="sm" fullWidth>
         <DialogTitle>Edit Teacher</DialogTitle>
         <DialogContent>
+          {errorMessages.length > 0 && (
+            <Alert severity="error" sx={{ mb: 2 }}>
+              <ul style={{ paddingLeft: 20, margin: 0 }}>
+                {errorMessages.map((err, idx) => (
+                  <li key={idx}>{err}</li>
+                ))}
+              </ul>
+            </Alert>
+          )}
+
           <Grid container spacing={2} mt={1}>
             <Grid item xs={6}>
               <TextField
@@ -259,6 +310,32 @@ const TeacherListing = () => {
           <Button onClick={handleClose}>Cancel</Button>
           <Button onClick={handleSave} color="primary" variant="contained">
             Save
+          </Button>
+        </DialogActions>
+      </Dialog>
+
+      {/* Delete Confirmation Dialog */}
+      <Dialog
+        open={deleteDialog}
+        onClose={() => setDeleteDialog(false)}
+        maxWidth="xs"
+      >
+        <DialogTitle>Confirm Delete</DialogTitle>
+        <DialogContent>
+          Are you sure you want to delete{" "}
+          <strong>
+            {teacherToDelete?.first_name} {teacherToDelete?.last_name}
+          </strong>
+          ?
+        </DialogContent>
+        <DialogActions>
+          <Button onClick={() => setDeleteDialog(false)}>Cancel</Button>
+          <Button
+            onClick={handleDeleteConfirm}
+            color="error"
+            variant="contained"
+          >
+            Delete
           </Button>
         </DialogActions>
       </Dialog>

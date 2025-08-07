@@ -15,7 +15,13 @@ class TeacherController extends Controller
      */
     public function index()
     {
-        $teachers = Teacher::with('user')->where('status', 'active')->paginate(1);
+        $teachers = Teacher::with('user')->where('status', 'active')->paginate(5);
+
+        return response()->json($teachers);
+    }
+
+    public function teacherchoice(){
+        $teachers = Teacher::with('user')->where('status','active');
 
         return response()->json($teachers);
     }
@@ -30,29 +36,13 @@ class TeacherController extends Controller
                 'email' => 'required|email|unique:users',
                 'username' => 'required|string|unique:users',
                 'password' => 'required|string|min:6',
-                'first_name' => 'required|string',
+                'first_name' => 'required|string|min:2',
                 'last_name' => 'required|string',
-                'phone' => 'required|string',
+                'phone' => 'required|string|digits:10',
                 'subject_specialization' => 'required|string',
                 'employee_id' => 'required|string|unique:teachers',
                 'date_of_joining' => 'required|date',
                 'status' => 'required|in:active,inactive',
-            ],
-            [
-                'email.required' => 'Please fill an email address',
-                'email.unique' => 'email already exists',
-                'password.required' => 'Please set a password',
-                'password.min' => 'Please input a password of min 6 characters length',
-                'first_name.required' => 'Please input the first name',
-                'last_name' => 'Please input the last name',
-                'phone.required' => 'Please fill the phone number',
-                'subject_specialization.required' => 'Please enter a subject',
-                'employee_id.required' => 'Please enter the employee id',
-                'employee_id.unique' => 'Employee id already exists',
-                'date_of_joining.required' => 'Please enter a date',
-                'status.required' => 'Please select the status',
-                'username.required' => 'Please entrer username',
-                'username.unique' => 'Username already exists'
             ]
         );
 
@@ -100,11 +90,11 @@ class TeacherController extends Controller
         $teacher = Teacher::with('user')->findOrFail($id);
         $user = $teacher->user;
         $validated = $request->validate([
-            'first_name' => 'sometimes|string',
+            'first_name' => 'sometimes|string|min:2',
             'last_name' => 'sometimes|string',
             'employee_id' => 'sometimes|string|unique:teachers,employee_id,' . $teacher->id,
-            'email' => 'sometimes|string|unique:users,email,' . $user->id,
-            'phone' => 'sometimes|string',
+            'email' => 'sometimes|string|email|unique:users,email,' . $user->id,
+            'phone' => 'sometimes|digits:10',
             'subject_specialization' => 'sometimes|string',
             'date_of_joining' => 'sometimes|date',
         ]);

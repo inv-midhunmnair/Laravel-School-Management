@@ -21,6 +21,7 @@ import {
   Collapse,
 } from "@mui/material";
 import EditIcon from "@mui/icons-material/Edit";
+import DeleteIcon from "@mui/icons-material/Delete";
 
 interface Student {
   id: number;
@@ -43,12 +44,14 @@ const StudentsPage = () => {
   const [editingStudent, setEditingStudent] = useState<Student | null>(null);
   const [formData, setFormData] = useState<Partial<Student>>({});
   const [successMessage, setSuccessMessage] = useState("");
+  const [errorMessages, setErrorMessages] = useState<string[]>([]);
+  const [deleteConfirmOpen, setDeleteConfirmOpen] = useState(false);
+  const [studentToDelete, setStudentToDelete] = useState<Student | null>(null);
 
   const fetchStudents = async (pageNumber: number) => {
     try {
       const res = await axiosInstance.get(`/admin/students?page=${pageNumber}`);
       const resData = res.data.data;
-
       const mappedStudents = resData.data.map(
         (s: any): Student => ({
           id: s.id,
@@ -57,18 +60,17 @@ const StudentsPage = () => {
           email: s.email,
           phone: s.phone,
           roll_number: s.roll_number,
-          student_class: s.class,
+          class: s.class,
           date_of_birth: s.date_of_birth,
           admission_date: s.admission_date,
           status: s.status,
           assigned_teacher_id: s.assigned_teacher_id,
         })
       );
-
       setStudents(mappedStudents);
       setLastPage(resData.last_page);
     } catch (err) {
-      console.error("❌ Error fetching students:", err);
+      console.error("Error fetching students:", err);
       alert("Failed to load students.");
     }
   };
@@ -84,40 +86,65 @@ const StudentsPage = () => {
   const handleEdit = (student: Student) => {
     setEditingStudent(student);
     setFormData({ ...student });
+    setErrorMessages([]);
   };
 
   const handleClose = () => {
     setEditingStudent(null);
     setFormData({});
+    setErrorMessages([]);
   };
 
   const handleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const { name, value } = e.target;
-
-    if (name === "assigned_teacher_id") {
-      setFormData((prev) => ({
-        ...prev,
-        [name]: value === "" ? null : parseInt(value, 10),
-      }));
-    } else {
-      setFormData((prev) => ({ ...prev, [name]: value }));
-    }
+    setFormData((prev) => ({
+      ...prev,
+      [name]:
+        name === "assigned_teacher_id"
+          ? value === ""
+            ? null
+            : parseInt(value, 10)
+          : value,
+    }));
   };
 
   const handleUpdate = async () => {
     if (!editingStudent) return;
-
     try {
       await axiosInstance.put(`/admin/students/${editingStudent.id}`, formData);
       setSuccessMessage("Student updated successfully.");
       fetchStudents(page);
       handleClose();
-
-      // Auto-dismiss after 3 seconds
       setTimeout(() => setSuccessMessage(""), 3000);
-    } catch (err) {
+    } catch (err: any) {
       console.error("Failed to update student:", err);
-      alert("Failed to update student.");
+      const serverErrors = err.response?.data?.errors;
+      if (serverErrors) {
+        const errorList = Object.values(serverErrors).flat();
+        setErrorMessages(errorList as string[]);
+      } else {
+        alert("Failed to update student.");
+      }
+    }
+  };
+
+  const confirmDelete = (student: Student) => {
+    setStudentToDelete(student);
+    setDeleteConfirmOpen(true);
+  };
+
+  const handleDelete = async () => {
+    if (!studentToDelete) return;
+    try {
+      await axiosInstance.delete(`/admin/students/${studentToDelete.id}`);
+      setSuccessMessage("Student deleted successfully.");
+      fetchStudents(page);
+    } catch (err) {
+      console.error("Failed to delete student:", err);
+      alert("Failed to delete student.");
+    } finally {
+      setDeleteConfirmOpen(false);
+      setStudentToDelete(null);
     }
   };
 
@@ -127,7 +154,6 @@ const StudentsPage = () => {
         Student Directory
       </Typography>
 
-      {/* Success Alert */}
       <Collapse in={!!successMessage}>
         <Alert severity="success" sx={{ mb: 2 }}>
           {successMessage}
@@ -139,46 +165,53 @@ const StudentsPage = () => {
           <Grid item xs={12} sm={6} md={4} key={student.id}>
             <Card elevation={3}>
               <CardContent>
-                <Stack
-                  direction="row"
-                  justifyContent="space-between"
-                  alignItems="center"
-                >
+                <Stack direction="row" justifyContent="space-between">
                   <Typography variant="h6" color="primary">
                     {student.first_name} {student.last_name}
                   </Typography>
-                  <Tooltip title="Edit Student">
-                    <IconButton
-                      onClick={() => handleEdit(student)}
-                      size="small"
-                    >
-                      <EditIcon fontSize="small" />
-                    </IconButton>
-                  </Tooltip>
+                  <Stack direction="row">
+                    <Tooltip title="Edit Student">
+                      <IconButton
+                        onClick={() => handleEdit(student)}
+                        size="small"
+                      >
+                        <EditIcon fontSize="small" />
+                      </IconButton>
+                    </Tooltip>
+                    <Tooltip title="Delete Student">
+                      <IconButton
+                        onClick={() => confirmDelete(student)}
+                        size="small"
+                        color="error"
+                      >
+                        <DeleteIcon fontSize="small" />
+                      </IconButton>
+                    </Tooltip>
+                  </Stack>
                 </Stack>
                 <Divider sx={{ my: 1 }} />
-                <Typography variant="body2" color="textSecondary">
+                <Typography variant="body2">
                   <strong>Email:</strong> {student.email}
                 </Typography>
-                <Typography variant="body2" color="textSecondary">
+                <Typography variant="body2">
                   <strong>Phone:</strong> {student.phone}
                 </Typography>
-                <Typography variant="body2" color="textSecondary">
+                <Typography variant="body2">
                   <strong>Roll No:</strong> {student.roll_number}
                 </Typography>
-                <Typography variant="body2" color="textSecondary">
-                  <strong>Class:</strong> {student.student_class}
+                <Typography variant="body2">
+                  <strong>Class:</strong> {student.class}
                 </Typography>
-                <Typography variant="body2" color="textSecondary">
+                <Typography variant="body2">
                   <strong>DOB:</strong> {student.date_of_birth}
                 </Typography>
-                <Typography variant="body2" color="textSecondary">
+                <Typography variant="body2">
                   <strong>Admission:</strong> {student.admission_date}
                 </Typography>
-                <Typography variant="body2" color="textSecondary">
+                <Typography variant="body2">
                   <strong>Status:</strong> {student.status}
                 </Typography>
-                <Typography variant="body2" color="textSecondary">
+                <Typography variant="body2">
                   <strong>Teacher ID:</strong>{" "}
                   {student.assigned_teacher_id ?? "Unassigned"}
                 </Typography>
@@ -197,7 +230,7 @@ const StudentsPage = () => {
         />
       </Box>
 
-      {/* Edit Student Dialog */}
+      {/* Edit Dialog */}
       <Dialog
         open={!!editingStudent}
         onClose={handleClose}
@@ -206,105 +239,96 @@ const StudentsPage = () => {
       >
         <DialogTitle>Edit Student</DialogTitle>
         <DialogContent>
+          {errorMessages.length > 0 && (
+            <Alert severity="error" sx={{ mb: 2 }}>
+              <ul style={{ margin: 0, paddingLeft: 20 }}>
+                {errorMessages.map((err, idx) => (
+                  <li key={idx}>{err}</li>
+                ))}
+              </ul>
+            </Alert>
+          )}
+
           <Grid container spacing={2} mt={1}>
-            <Grid item xs={6}>
+            <Grid item xs={12} sm={6}>
               <TextField
-                name="first_name"
                 label="First Name"
-                fullWidth
+                name="first_name"
                 value={formData.first_name || ""}
                 onChange={handleChange}
+                fullWidth
               />
             </Grid>
-            <Grid item xs={6}>
+            <Grid item xs={12} sm={6}>
               <TextField
-                name="last_name"
                 label="Last Name"
-                fullWidth
+                name="last_name"
                 value={formData.last_name || ""}
                 onChange={handleChange}
+                fullWidth
               />
             </Grid>
             <Grid item xs={12}>
               <TextField
-                name="email"
                 label="Email"
-                fullWidth
+                name="email"
                 value={formData.email || ""}
                 onChange={handleChange}
+                fullWidth
               />
             </Grid>
             <Grid item xs={12}>
               <TextField
-                name="phone"
                 label="Phone"
-                fullWidth
+                name="phone"
                 value={formData.phone || ""}
                 onChange={handleChange}
+                fullWidth
               />
             </Grid>
             <Grid item xs={12}>
               <TextField
-                name="roll_number"
                 label="Roll Number"
-                fullWidth
+                name="roll_number"
                 value={formData.roll_number || ""}
                 onChange={handleChange}
+                fullWidth
               />
             </Grid>
             <Grid item xs={12}>
               <TextField
-                name="student_class"
                 label="Class"
-                fullWidth
-                value={formData.student_class || ""}
+                name="class"
+                value={formData.class || ""}
                 onChange={handleChange}
+                fullWidth
               />
             </Grid>
             <Grid item xs={12}>
               <TextField
-                name="date_of_birth"
                 label="Date of Birth"
-                type="date"
-                fullWidth
-                InputLabelProps={{ shrink: true }}
+                name="date_of_birth"
                 value={formData.date_of_birth || ""}
                 onChange={handleChange}
+                fullWidth
               />
             </Grid>
             <Grid item xs={12}>
               <TextField
-                name="admission_date"
                 label="Admission Date"
-                type="date"
-                fullWidth
-                InputLabelProps={{ shrink: true }}
+                name="admission_date"
                 value={formData.admission_date || ""}
                 onChange={handleChange}
+                fullWidth
               />
             </Grid>
             <Grid item xs={12}>
               <TextField
-                name="status"
                 label="Status"
-                fullWidth
+                name="status"
                 value={formData.status || ""}
                 onChange={handleChange}
-              />
-            </Grid>
-            <Grid item xs={12}>
-              <TextField
-                name="assigned_teacher_id"
-                label="Assigned Teacher ID"
-                type="number"
                 fullWidth
-                value={
-                  formData.assigned_teacher_id !== null &&
-                  formData.assigned_teacher_id !== undefined
-                    ? formData.assigned_teacher_id
-                    : ""
-                }
-                onChange={handleChange}
               />
             </Grid>
           </Grid>
@@ -313,6 +337,27 @@ const StudentsPage = () => {
           <Button onClick={handleClose}>Cancel</Button>
           <Button variant="contained" onClick={handleUpdate}>
             Save Changes
+          </Button>
+        </DialogActions>
+      </Dialog>
+
+      {/* Delete Confirmation Dialog */}
+      <Dialog
+        open={deleteConfirmOpen}
+        onClose={() => setDeleteConfirmOpen(false)}
+      >
+        <DialogTitle>Confirm Delete</DialogTitle>
+        <DialogContent>
+          Are you sure you want to delete{" "}
+          <strong>
+            {studentToDelete?.first_name} {studentToDelete?.last_name}
+          </strong>
+          ?
+        </DialogContent>
+        <DialogActions>
+          <Button onClick={() => setDeleteConfirmOpen(false)}>Cancel</Button>
+          <Button color="error" onClick={handleDelete} variant="contained">
+            Delete
           </Button>
         </DialogActions>
       </Dialog>
