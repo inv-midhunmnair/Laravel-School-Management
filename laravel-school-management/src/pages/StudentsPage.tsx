@@ -99,12 +99,7 @@ const StudentsPage = () => {
     const { name, value } = e.target;
     setFormData((prev) => ({
       ...prev,
-      [name]:
-        name === "assigned_teacher_id"
-          ? value === ""
-            ? null
-            : parseInt(value, 10)
-          : value,
+      [name]: value,
     }));
   };
 

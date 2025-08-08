@@ -166,15 +166,16 @@ const RegisterStudentPage = () => {
               </Grid>
             ))}
 
-            {/* ✅ Assigned Teacher Dropdown */}
+            {/* Assigned Teacher Dropdown */}
             <Grid item xs={12} sm={4}>
-              <FormControl size="small" fullWidth required>
-                <InputLabel id="assigned-teacher-label">
+              <FormControl size="small" fullWidth required variant="outlined">
+                <InputLabel id="demo-simple-select-label">
                   Assigned Teacher
                 </InputLabel>
                 <Select
                   labelId="assigned-teacher-label"
                   name="assigned_teacher_id"
+                  sx={{ minWidth: 180 }}
                   value={formData.assigned_teacher_id}
                   label="Assigned Teacher"
                   onChange={handleChange}
