@@ -24,6 +24,7 @@ import EditIcon from "@mui/icons-material/Edit";
 import DeleteIcon from "@mui/icons-material/Delete";
 
 interface Student {
+  teacher_name: string;
   id: number;
   first_name: string;
   last_name: string;
@@ -61,6 +62,7 @@ const StudentsPage = () => {
           phone: s.phone,
           roll_number: s.roll_number,
           class: s.class,
+          teacher_name: s.teacher.first_name + " " + s.teacher.last_name,
           date_of_birth: s.date_of_birth,
           admission_date: s.admission_date,
           status: s.status,
@@ -210,6 +212,10 @@ const StudentsPage = () => {
                   <strong>Teacher ID:</strong>{" "}
                   {student.assigned_teacher_id ?? "Unassigned"}
                 </Typography>
+                <Typography variant="body2">
+                  <strong>Teacher Name:</strong>{" "}
+                  {student.teacher_name ?? "Unassigned"}
+                </Typography>
               </CardContent>
             </Card>
           </Grid>
@@ -225,7 +231,6 @@ const StudentsPage = () => {
         />
       </Box>
 
-      {/* Edit Dialog */}
       <Dialog
         open={!!editingStudent}
         onClose={handleClose}

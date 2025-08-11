@@ -20,7 +20,9 @@ class StudentController extends Controller
 
         if ($user->role === 'admin') {
 
-            $students = Student::where('status', 'active')->paginate(5);
+            $students = Student::where('status', 'active')
+            ->with('Teacher:id,first_name,last_name')
+            ->paginate(5);
         } elseif ($user->role === 'teacher') {
 
             $teacher = $user->teacher;
