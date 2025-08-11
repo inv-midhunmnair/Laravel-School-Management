@@ -214,7 +214,7 @@ const Teacher = () => {
         />
       </Box>
 
-      {/* Edit Dialog */}
+     
       <Dialog
         open={!!editingTeacher}
         onClose={handleClose}
@@ -316,7 +316,7 @@ const Teacher = () => {
         </DialogActions>
       </Dialog>
 
-      {/* Delete Confirmation Dialog */}
+      
       <Dialog
         open={deleteConfirmOpen}
         onClose={() => setDeleteConfirmOpen(false)}

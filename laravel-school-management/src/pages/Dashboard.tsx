@@ -10,10 +10,7 @@ const DashboardPage = () => {
   const { role } = useAuth();
 
   const getWelcomeMessage = () => {
-    console.log("Test");
-    if (role === "admin") return "Welcome, Admin";
-    if (role === "teacher") return "Welcome, Teacher";
-    if (role === "student") return "Welcome, Student";
+    return "Welcome, " + role;
   };
 
   return (

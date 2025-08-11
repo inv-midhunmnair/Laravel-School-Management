@@ -27,7 +27,7 @@ const RegisterTeacherPage = () => {
   const [error, setError] = useState<string[]>([]);
 
   const handleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    setFormData({ ...formData, [e.target.name]: e.target.value.trim() });
+    setFormData({ ...formData, [e.target.name]: e.target.value });
   };
 
   const handleSubmit = async (e: React.FormEvent) => {
@@ -126,7 +126,7 @@ const RegisterTeacherPage = () => {
             ))}
           </Grid>
 
-          {/* Submit Button */}
+          
           <Box sx={{ textAlign: "center", mt: 4 }}>
             <Button
               type="submit"

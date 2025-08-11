@@ -165,8 +165,7 @@ const RegisterStudentPage = () => {
                 />
               </Grid>
             ))}
-
-            {/* Assigned Teacher Dropdown */}
+            
             <Grid item xs={12} sm={4}>
               <FormControl size="small" fullWidth required variant="outlined">
                 <InputLabel id="demo-simple-select-label">

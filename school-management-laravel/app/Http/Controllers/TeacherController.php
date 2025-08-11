@@ -20,12 +20,6 @@ class TeacherController extends Controller
         return response()->json($teachers);
     }
 
-    public function teacherchoice(){
-        $teachers = Teacher::with('user')->where('status','active');
-
-        return response()->json($teachers);
-    }
-
     /**
      * Store a newly created resource in storage.
      */
