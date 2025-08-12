@@ -31,7 +31,7 @@ interface Student {
   email: string;
   phone: string;
   roll_number: string;
-  student_class: string;
+  class: string;
   date_of_birth: string;
   admission_date: string;
   status: string;

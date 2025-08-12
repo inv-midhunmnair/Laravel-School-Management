@@ -13,12 +13,11 @@ const AppLayout = ({ children }: { children: React.ReactNode }) => {
     <Box
       sx={{ display: "flex", minHeight: "100vh", backgroundColor: "#f4f6f8" }}
     >
-      {/* Sidebar */}
+     
       <Sidebar />
 
-      {/* Main Area */}
       <Box sx={{ flexGrow: 1 }}>
-        {/* Navbar */}
+  
         <AppBar
           position="fixed"
           elevation={0}
@@ -64,7 +63,7 @@ const AppLayout = ({ children }: { children: React.ReactNode }) => {
           </Toolbar>
         </AppBar>
 
-        {/* Content with padding and margin */}
+        
         <Box sx={{ mt: 11, px: 4, py: 3 }}>{children}</Box>
       </Box>
     </Box>
