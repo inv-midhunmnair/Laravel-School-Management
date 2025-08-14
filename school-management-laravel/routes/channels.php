@@ -1,11 +1,12 @@
 <?php
 
+use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Facades\Broadcast;
 
-Broadcast::channel('chat.{conversationId}', function ($user, $conversationId) {
-    // Assuming Conversation model has teacher_id and student_id:
-    $conv = \App\Models\Conversation::find($conversationId);
-    return $conv &&
-        ($user->id == $conv->teacher_id ||
-            $user->id == $conv->student_id);
+Broadcast::channel('chat.{userIds}', function ($user, $userIds) {
+    Log::info('Broadcast auth attempt', ['user' => $user, 'userIds' => $userIds]);
+
+    $ids = explode('_', $userIds);
+    logger('Broadcast auth', ['user' => $user, 'userIds' => $userIds]);
+    return in_array($user->id, $ids);
 });

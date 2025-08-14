@@ -21,8 +21,8 @@ class StudentController extends Controller
         if ($user->role === 'admin') {
 
             $students = Student::where('status', 'active')
-            ->with('Teacher:id,first_name,last_name')
-            ->paginate(5);
+                ->with('Teacher:id,first_name,last_name')
+                ->paginate(5);
         } elseif ($user->role === 'teacher') {
 
             $teacher = $user->teacher;
@@ -96,10 +96,10 @@ class StudentController extends Controller
      */
     public function show(string $id)
     {
-        try{
+        try {
             $student = Student::with('user')->findOrFail($id);
-        } catch(ModelNotFoundException $e) {
-            return response()->json(['error'=>'No user found'],404);
+        } catch (ModelNotFoundException $e) {
+            return response()->json(['error' => 'No user found'], 404);
         }
         return response()->json($student);
     }
