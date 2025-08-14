@@ -67,7 +67,7 @@ class StudentController extends Controller
             'email' => $validated_data['email'],
             'password' => Hash::make($validated_data['password']),
             'username' => $validated_data['username'],
-            'role' => 'teacher',
+            'role' => 'student',
             'status' => $validated_data['status']
         ]);
 

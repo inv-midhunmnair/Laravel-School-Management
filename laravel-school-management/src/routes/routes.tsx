@@ -9,6 +9,7 @@ import TeacherListing from "../pages/TeacherListing";
 import TeacherStudentsPage from "../pages/TeacherStudentsPage";
 import StudentsPage from "../pages/StudentsPage";
 import RegisterStudentPage from "../pages/RegisterStudentPage";
+import ChatPage from "../pages/ChatPage";
 
 const Approutes = () => (
   <Routes>
@@ -41,6 +42,20 @@ const Approutes = () => (
           element={
             <AppLayout>
               <RegisterTeacherPage />
+            </AppLayout>
+          }
+        />
+      }
+    />
+
+    <Route
+      path="/chat"
+      element={
+        <ProtectedRoute
+          element={
+            <AppLayout>
+              {/* receiverId could be dynamic or hardcoded for testing */}
+              <ChatPage receiverId={2} />
             </AppLayout>
           }
         />

@@ -20,13 +20,13 @@ class Student extends Model
         'assigned_teacher_id'
     ];
 
-    public function user(){
-        return $this->belongsTo(User::class);
+    public function user()
+    {
+        return $this->belongsTo(User::class, 'user_id');
     }
 
-    public function Teacher(){
+    public function Teacher()
+    {
         return $this->belongsTo(Teacher::class, 'assigned_teacher_id');
     }
-
-
 }

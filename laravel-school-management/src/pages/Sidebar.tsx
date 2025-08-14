@@ -48,11 +48,25 @@ const Sidebar = () => {
   ];
   const teacherItems = [
     { label: "Students", path: "/teacher-students", icon: <GroupIcon /> },
+    {
+      label: "Chat",
+      path: "/chat",
+      icon: <GroupIcon />, // You can pick any icon
+    },
+  ];
+
+  const StudentItems = [
+    {
+      label: "Chat",
+      path: "/chat",
+      icon: <GroupIcon />, // You can pick any icon
+    },
   ];
 
   let roleItems: { label: string; path: string; icon: JSX.Element }[] = [];
   if (role === "admin") roleItems = adminItems;
   else if (role === "teacher") roleItems = teacherItems;
+  else if (role == "student") roleItems = StudentItems;
 
   const menuItems = [...commonItems, ...roleItems];
 
