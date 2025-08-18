@@ -1,12 +1,10 @@
 <?php
-
-use Illuminate\Support\Facades\Log;
+// routes/channels.php
 use Illuminate\Support\Facades\Broadcast;
 
-Broadcast::channel('chat.{userIds}', function ($user, $userIds) {
-    Log::info('Broadcast auth attempt', ['user' => $user, 'userIds' => $userIds]);
+Broadcast::routes(['middleware' => ['auth:api']]); // JWT-protected auth endpoint
 
-    $ids = explode('_', $userIds);
-    logger('Broadcast auth', ['user' => $user, 'userIds' => $userIds]);
-    return in_array($user->id, $ids);
+Broadcast::channel('chat.{userId}', function ($user, $userId) {
+    // Only allow the owner of the channel to listen
+    return (int) $user->id === (int) $userId;
 });

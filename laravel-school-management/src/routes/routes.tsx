@@ -55,7 +55,7 @@ const Approutes = () => (
           element={
             <AppLayout>
               {/* receiverId could be dynamic or hardcoded for testing */}
-              <ChatPage receiverId={2} />
+              <ChatPage/>
             </AppLayout>
           }
         />

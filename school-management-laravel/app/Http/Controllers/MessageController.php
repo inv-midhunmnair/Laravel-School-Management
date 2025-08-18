@@ -7,66 +7,61 @@ use App\Models\Message;
 use App\Models\Student;
 use App\Models\Teacher;
 use App\Events\MessageSent;
+use App\Models\User;
 
 
 class MessageController extends Controller
 {
-
-
-    public function fetchMessages($receiverId)
-    {
-        $user = request()->user(); // authenticated user
-        $userId = $user->id;
-
-        $messages = Message::where(function ($q) use ($userId, $receiverId) {
-            $q->where('sender_id', $userId)
-                ->where('receiver_id', $receiverId);
-        })->orWhere(function ($q) use ($userId, $receiverId) {
-            $q->where('sender_id', $receiverId)
-                ->where('receiver_id', $userId);
-        })->orderBy('created_at', 'asc')->get();
-
-        return response()->json($messages);
-    }
-
+    // Send a message
     public function sendMessage(Request $request)
     {
         $request->validate([
             'receiver_id' => 'required|exists:users,id',
-            'message' => 'required|string',
+            'message' => 'required|string|max:1000',
         ]);
 
-        $senderId = auth()->id();
+        $sender = $request->user();
+        $receiver = User::findOrFail($request->receiver_id);
 
-        // Optionally validate teacher-student assignment
-        $sender = auth()->user();
-        if ($sender->role === 'student') {
-            $student = $sender->student;
-            if ($student->assigned_teacher_id != $request->receiver_id) {
-                return response()->json(['error' => 'Cannot send message to this teacher'], 403);
-            }
-        }
-
+        // ✅ Security: Ensure teacher ↔ student assignment
         if ($sender->role === 'teacher') {
-            $student = Student::where('user_id', $request->receiver_id)
-                ->where('assigned_teacher_id', $sender->teacher->id)
-                ->first();
-            if (!$student) {
-                return response()->json(['error' => 'Cannot send message to this student'], 403);
+            $teacher = $sender->teacher;
+            if (!$teacher || !$receiver->student || $receiver->student->assigned_teacher_id !== $teacher->id) {
+                return response()->json(['error' => 'Not allowed'], 403);
+            }
+        } elseif ($sender->role === 'student') {
+            $student = $sender->student;
+            if (!$student || !$receiver->teacher || $student->assigned_teacher_id !== $receiver->teacher->id) {
+                return response()->json(['error' => 'Not allowed'], 403);
             }
         }
 
         $message = Message::create([
-            'sender_id' => $senderId,
-            'receiver_id' => $request->receiver_id,
-            'message' => $request->message
+            'sender_id' => $sender->id,
+            'receiver_id' => $receiver->id,
+            'message' => $request->message,
         ]);
 
+        broadcast(new MessageSent($message));
 
+        return response()->json($message, 201);
+    }
 
-        broadcast(new MessageSent($message))->toOthers();
+    // Fetch chat history with specific user
+    public function getMessages(Request $request, $userId)
+    {
+        $authUser = $request->user();
 
-        return response()->json($message);
+        $messages = Message::where(function ($q) use ($authUser, $userId) {
+            $q->where('sender_id', $authUser->id)->where('receiver_id', $userId);
+        })
+            ->orWhere(function ($q) use ($authUser, $userId) {
+                $q->where('sender_id', $userId)->where('receiver_id', $authUser->id);
+            })
+            ->orderBy('created_at', 'asc')
+            ->get();
+
+        return response()->json($messages);
     }
 
     public function getData(Request $request)

@@ -42,6 +42,7 @@ const ChatPage: React.FC = () => {
     messagesEndRef.current?.scrollIntoView({ behavior: "smooth" });
   };
 
+  // ✅ Fetch logged-in user first
   const fetchCurrentUser = async () => {
     try {
       const res = await axiosInstance.get<User>("/me");
@@ -51,13 +52,14 @@ const ChatPage: React.FC = () => {
     }
   };
 
+  // ✅ Fetch teacher/student list after currentUser is known
   const fetchUsers = async () => {
+    if (!currentUser) return;
     try {
-      const res = await axiosInstance.get("/chat/users"); // backend endpoint
+      const res = await axiosInstance.get("/chat/users");
       const data = res.data;
 
       if (data.role === "teacher") {
-        // Teacher sees assigned students
         const students: User[] = data.students.map((s: any) => ({
           id: s.id,
           name: s.name,
@@ -69,7 +71,6 @@ const ChatPage: React.FC = () => {
       }
 
       if (data.role === "student") {
-        // Student sees assigned teacher
         const teacher: User = {
           id: data.teacher.id,
           name: data.teacher.name,
@@ -84,6 +85,7 @@ const ChatPage: React.FC = () => {
     }
   };
 
+  // Fetch messages with a user
   const fetchMessages = async (receiverId: number) => {
     if (!currentUser) return;
     try {
@@ -94,45 +96,63 @@ const ChatPage: React.FC = () => {
     }
   };
 
+  // Send message
   const sendMessage = async () => {
-    if (!newMessage.trim() || !selectedUser) return;
+    if (!newMessage.trim() || !selectedUser || !currentUser) return;
     try {
-      await axiosInstance.post("/messages", {
+      const res = await axiosInstance.post<Message>("/messages", {
         receiver_id: selectedUser.id,
         message: newMessage,
       });
+
+      setMessages((prev) =>
+        prev.some((msg) => msg.id === res.data.id) ? prev : [...prev, res.data]
+      );
+
       setNewMessage("");
     } catch (err) {
       console.error("Failed to send message:", err);
     }
   };
 
+  // ✅ On mount -> fetch logged-in user
   useEffect(() => {
     fetchCurrentUser();
-    fetchUsers();
   }, []);
 
+  // ✅ After currentUser is loaded -> fetch users & subscribe to channel
   useEffect(() => {
-    let channel: any;
+    if (!currentUser) return;
 
-    if (selectedUser && currentUser) {
-      fetchMessages(selectedUser.id);
+    fetchUsers();
 
-      const channelName = `chat.${[currentUser.id, selectedUser.id]
-        .sort()
-        .join("_")}`;
-      channel = echo.private(channelName);
+    const channelName = `chat.${currentUser.id}`;
+    const channel = echo.private(channelName);
 
-      channel.listen("MessageSent", (e: { message: Message }) => {
-        setMessages((prev) => [...prev, e.message]);
-      });
-    }
+    channel.listen(".message.sent", (e: { message: Message }) => {
+      if (
+        selectedUser &&
+        (e.message.sender_id === selectedUser.id ||
+          e.message.receiver_id === selectedUser.id)
+      ) {
+        setMessages((prev) =>
+          prev.some((msg) => msg.id === e.message.id)
+            ? prev
+            : [...prev, e.message]
+        );
+      }
+    });
 
     return () => {
-      if (channel) {
-        channel.stopListening("MessageSent");
-      }
+      echo.leave(channelName);
     };
+  }, [currentUser, selectedUser]);
+
+  // ✅ Fetch chat messages whenever selectedUser changes
+  useEffect(() => {
+    if (selectedUser && currentUser) {
+      fetchMessages(selectedUser.id);
+    }
   }, [selectedUser, currentUser]);
 
   useEffect(() => {
@@ -148,7 +168,7 @@ const ChatPage: React.FC = () => {
       borderRadius={2}
       overflow="hidden"
     >
-      {/* User List */}
+      {/* Sidebar with Users */}
       <Paper
         sx={{ width: 240, bgcolor: "grey.100", overflowY: "auto" }}
         elevation={0}
@@ -165,9 +185,7 @@ const ChatPage: React.FC = () => {
                 onClick={() => setSelectedUser(user)}
               >
                 <ListItemText
-                  primary={`${user.name} (${
-                    user.role?.charAt(0).toUpperCase() + user.role?.slice(1)
-                  })`}
+                  primary={`${user.name} (${user.role})`}
                   secondary={user.email}
                 />
               </ListItemButton>
@@ -228,9 +246,8 @@ const ChatPage: React.FC = () => {
               />
               <Button
                 variant="contained"
-                color="success"
-                sx={{ ml: 1 }}
                 onClick={sendMessage}
+                disabled={!newMessage.trim()}
               >
                 Send
               </Button>

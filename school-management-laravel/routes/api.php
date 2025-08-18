@@ -22,12 +22,10 @@ Route::middleware(['auth:api', 'role:admin'])->prefix('admin')->group(function (
 Route::get('/teacher-student', [StudentController::class, 'index'])->middleware(['auth:api', 'role:teacher']);
 
 Route::middleware('auth:api')->group(function () {
-    Route::get('messages/{receiverId}', [MessageController::class, 'fetchMessages']);
-    Route::post('messages', [MessageController::class, 'sendMessage']);
+    Route::post('/messages', [MessageController::class, 'sendMessage']);
+    Route::get('/messages/{userId}', [MessageController::class, 'getMessages']);
 });
 
 Route::get('/chat/users', [MessageController::class, 'getData'])->middleware(['auth:api']);
-
-Broadcast::routes(['middleware' => ['auth:api', 'role:teacher,student']]);
 
 
