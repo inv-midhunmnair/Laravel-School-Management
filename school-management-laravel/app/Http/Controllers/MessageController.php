@@ -8,11 +8,10 @@ use App\Models\Student;
 use App\Models\Teacher;
 use App\Events\MessageSent;
 use App\Models\User;
-
+use Carbon\Carbon;
 
 class MessageController extends Controller
 {
-    // Send a message
     public function sendMessage(Request $request)
     {
         $request->validate([
@@ -23,7 +22,6 @@ class MessageController extends Controller
         $sender = $request->user();
         $receiver = User::findOrFail($request->receiver_id);
 
-        // ✅ Security: Ensure teacher ↔ student assignment
         if ($sender->role === 'teacher') {
             $teacher = $sender->teacher;
             if (!$teacher || !$receiver->student || $receiver->student->assigned_teacher_id !== $teacher->id) {
@@ -47,7 +45,6 @@ class MessageController extends Controller
         return response()->json($message, 201);
     }
 
-    // Fetch chat history with specific user
     public function getMessages(Request $request, $userId)
     {
         $authUser = $request->user();
@@ -55,11 +52,30 @@ class MessageController extends Controller
         $messages = Message::where(function ($q) use ($authUser, $userId) {
             $q->where('sender_id', $authUser->id)->where('receiver_id', $userId);
         })
-            ->orWhere(function ($q) use ($authUser, $userId) {
-                $q->where('sender_id', $userId)->where('receiver_id', $authUser->id);
-            })
-            ->orderBy('created_at', 'asc')
-            ->get();
+        ->orWhere(function ($q) use ($authUser, $userId) {
+            $q->where('sender_id', $userId)->where('receiver_id', $authUser->id);
+        })
+        ->orderBy('created_at', 'asc')
+        ->get();
+
+        $count = 0;
+        $previousDate = null;
+
+        $formattedMessages = $messages->map(function ($msg) use (&$previousDate, &$count) {
+            $count++;
+            $msgDate = Carbon::parse($msg->created_at)->timezone('Asia/Kolkata'); 
+            $currentDateString = $msgDate->toDateString();
+
+            if ($previousDate !== $currentDateString or $count%5 === 0) {
+                $msg->formatted_time = $msgDate->format('M d Y, H:i'); 
+            } else {
+                $msg->formatted_time = $msgDate->format('H:i'); 
+            }
+
+            $previousDate = $currentDateString;
+
+            return $msg;
+        });
 
         return response()->json($messages);
     }
@@ -69,8 +85,7 @@ class MessageController extends Controller
         $authUser = $request->user();
 
         if ($authUser->role === 'student') {
-            // Fetch the assigned teacher for this student
-            $teacher = Teacher::where('id', $authUser->student->assigned_teacher_id)->first(); // assuming relation `assignedTeacher`
+            $teacher = Teacher::where('id', $authUser->student->assigned_teacher_id)->first(); 
             return response()->json([
                 'role' => 'student',
                 'teacher' => [
@@ -82,7 +97,6 @@ class MessageController extends Controller
         }
 
         if ($authUser->role === 'teacher') {
-            // Fetch all students assigned to this teacher
             $teacher = $authUser->teacher;
             $students = Student::where('assigned_teacher_id', $teacher->id)->get();
             $studentData = $students->map(function ($student) {

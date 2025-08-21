@@ -1,6 +1,6 @@
 import React, { useState, useEffect, useRef } from "react";
 import axiosInstance from "../api/axios.interceptor";
-import echo from "../echo";
+import { getEcho } from "../echo";
 import {
   Box,
   List,
@@ -20,6 +20,7 @@ interface Message {
   receiver_id: number;
   message: string;
   created_at: string;
+  formatted_time: string;
 }
 
 interface User {
@@ -39,10 +40,9 @@ const ChatPage: React.FC = () => {
   const messagesEndRef = useRef<HTMLDivElement>(null);
 
   const scrollToBottom = () => {
-    messagesEndRef.current?.scrollIntoView({ behavior: "smooth" });
+    messagesEndRef.current?.scrollIntoView();
   };
 
-  // ✅ Fetch logged-in user first
   const fetchCurrentUser = async () => {
     try {
       const res = await axiosInstance.get<User>("/me");
@@ -52,7 +52,6 @@ const ChatPage: React.FC = () => {
     }
   };
 
-  // ✅ Fetch teacher/student list after currentUser is known
   const fetchUsers = async () => {
     if (!currentUser) return;
     try {
@@ -67,7 +66,6 @@ const ChatPage: React.FC = () => {
           role: "student",
         }));
         setUsers(students);
-        if (students.length > 0 && !selectedUser) setSelectedUser(students[0]);
       }
 
       if (data.role === "student") {
@@ -78,14 +76,12 @@ const ChatPage: React.FC = () => {
           role: "teacher",
         };
         setUsers([teacher]);
-        if (!selectedUser) setSelectedUser(teacher);
       }
     } catch (err) {
       console.error("Failed to fetch users:", err);
     }
   };
 
-  // Fetch messages with a user
   const fetchMessages = async (receiverId: number) => {
     if (!currentUser) return;
     try {
@@ -115,30 +111,27 @@ const ChatPage: React.FC = () => {
     }
   };
 
-  // ✅ On mount -> fetch logged-in user
   useEffect(() => {
     fetchCurrentUser();
   }, []);
 
-  // ✅ After currentUser is loaded -> fetch users & subscribe to channel
   useEffect(() => {
     if (!currentUser) return;
-
     fetchUsers();
 
+    const echo = getEcho();
     const channelName = `chat.${currentUser.id}`;
+
     const channel = echo.private(channelName);
 
-    channel.listen(".message.sent", (e: { message: Message }) => {
+    channel.listen(".message.sent", (msg: Message) => {
       if (
         selectedUser &&
-        (e.message.sender_id === selectedUser.id ||
-          e.message.receiver_id === selectedUser.id)
+        (msg.sender_id === selectedUser.id ||
+          msg.receiver_id === selectedUser.id)
       ) {
         setMessages((prev) =>
-          prev.some((msg) => msg.id === e.message.id)
-            ? prev
-            : [...prev, e.message]
+          prev.some((m) => m.id === msg.id) ? prev : [...prev, msg]
         );
       }
     });
@@ -148,7 +141,6 @@ const ChatPage: React.FC = () => {
     };
   }, [currentUser, selectedUser]);
 
-  // ✅ Fetch chat messages whenever selectedUser changes
   useEffect(() => {
     if (selectedUser && currentUser) {
       fetchMessages(selectedUser.id);
@@ -157,7 +149,7 @@ const ChatPage: React.FC = () => {
 
   useEffect(() => {
     scrollToBottom();
-  }, [messages]);
+  }, [messages, selectedUser]);
 
   return (
     <Box
@@ -195,6 +187,7 @@ const ChatPage: React.FC = () => {
       </Paper>
 
       {/* Chat Window */}
+
       <Box flex={1} display="flex" flexDirection="column" bgcolor="white">
         {selectedUser ? (
           <>
@@ -226,12 +219,22 @@ const ChatPage: React.FC = () => {
                       p: 1.5,
                       borderRadius: 2,
                       maxWidth: "70%",
+                      mb: 1,
                     }}
                   >
-                    {msg.message}
+                    <Typography variant="body1">{msg.message}</Typography>
+
+                    <Typography
+                      variant="caption"
+                      color="textSecondary"
+                      sx={{ display: "block", textAlign: "right", mt: 0.5 }}
+                    >
+                      {msg.formatted_time}
+                    </Typography>
                   </Box>
                 );
               })}
+
               <div ref={messagesEndRef} />
             </Box>
 

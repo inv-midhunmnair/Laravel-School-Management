@@ -5,9 +5,6 @@ use App\Http\Controllers\TeacherController;
 use App\Http\Controllers\StudentController;
 use App\Http\Controllers\MessageController;
 
-use Illuminate\Support\Facades\Broadcast;
-
-
 use Illuminate\Support\Facades\Route;
 
 Route::post('/login', [Authcontroller::class, 'login']);
